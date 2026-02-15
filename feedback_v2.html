@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Audiology Feedback Form</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <style>
+        :root {
+            --primary: #00467f;
+            --border: #ccc;
+        }
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+        .container {
+            max-width: 850px;
+            background: white;
+            padding: 40px;
+            margin: 0 auto;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        
+        .header {
+            text-align: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 20px;
+            margin-bottom: 20px;
+        }
+        .uni-name {
+            font-size: 18px;
+            font-weight: bold;
+            color: var(--primary);
+            text-transform: uppercase;
+        }
+        h1 {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .form-group {
+            margin-bottom: 10px;
+        }
+        label {
+            font-weight: bold;
+            font-size: 14px;
+            display: block;
+            margin-bottom: 5px;
+        }
+        input[type="text"], input[type="date"] {
+            width: 100%;
+            padding: 5px;
+            border: none;
+            border-bottom: 1px solid #000;
+            background: transparent;
+            font-size: 14px;
+        }
+        
+        .section-title {
+            background-color: var(--primary);
+            color: white;
+            padding: 8px;
+            font-weight: bold;
+            margin-top: 20px;
+            margin-bottom: 15px;
+            page-break-inside: avoid; /* Keeps title with content */
+        }
+        
+        /* UPDATED TEXTAREA STYLING */
+        textarea {
+            width: 100%;
+            min-height: 100px; /* Starts at this height */
+            padding: 10px;
+            border: 1px solid var(--border);
+            font-family: 'Arial', sans-serif;
+            resize: none; /* User cannot manually resize */
+            overflow-y: hidden; /* Hides scrollbar */
+            display: block;
+            box-sizing: border-box; /* Ensures padding doesn't mess up width */
+        }
+
+        .rating-key {
+            border: 1px solid var(--border);
+            padding: 10px;
+            font-size: 12px;
+            background-color: #f9f9f9;
+            margin-bottom: 20px;
+            page-break-inside: avoid;
+        }
+        .rating-key strong { display: block; margin-bottom: 5px; }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 20px;
+        }
+        th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            page-break-inside: avoid; /* Prevents rows splitting weirdly */
+        }
+        th {
+            background-color: #eee;
+            text-align: center;
+        }
+        .criteria-col { width: 70%; }
+        .rating-col { width: 6%; text-align: center; }
+        
+        .sub-text {
+            display: block;
+            font-size: 11px;
+            color: #555;
+            margin-top: 4px;
+            font-style: italic;
+        }
+
+        .controls {
+            max-width: 850px;
+            margin: 0 auto 20px auto;
+            text-align: right;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
+        }
+        button {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+        }
+        .btn-save { background-color: #28a745; color: white; }
+        .btn-clear { background-color: #dc3545; color: white; }
+        .btn-save:hover { background-color: #218838; }
+        .btn-clear:hover { background-color: #c82333; }
+
+    </style>
+</head>
+<body>
+
+    <div class="controls" data-html2pdf-ignore="true">
+        <button class="btn-clear" onclick="clearForm()">Reset / Clear Form</button>
+        <button class="btn-save" onclick="generatePDF()">Save as Locked PDF</button>
+    </div>
+
+    <div class="container" id="feedback-form">
+        
+        <div class="header">
+            <div class="uni-name">Waipapa Taumata Rau | University of Auckland</div>
+            <h1>Audiology Feedback Form</h1>
+        </div>
+
+        <div class="info-grid">
+            <div class="form-group">
+                <label>Student Name:</label>
+                <input type="text" id="studentName" placeholder="Enter Name">
+            </div>
+            <div class="form-group">
+                <label>Clinic Date:</label>
+                <input type="date" id="clinicDate">
+            </div>
+            <div class="form-group">
+                <label>Clinician:</label>
+                <input type="text" placeholder="Enter Clinician Name">
+            </div>
+            <div class="form-group">
+                <label>Clinic Type:</label>
+                <input type="text" placeholder="e.g. Pediatric, HA Fitting">
+            </div>
+            <div class="form-group" style="grid-column: span 2;">
+                <label>MNZAS Member:</label>
+                <input type="checkbox" style="width: auto;"> Yes
+            </div>
+        </div>
+
+        <div class="section-title">Session Feedback</div>
+
+        <div class="form-group">
+            <label>List of Feedback:</label>
+            <textarea placeholder="List feedback..." oninput="autoResize(this)"></textarea>
+        </div>        
+
+        <div class="form-group">
+            <label>Well done on the following (1-3 things):</label>
+            <textarea placeholder="Enter feedback..." oninput="autoResize(this)"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Areas for Improvement:</label>
+            <textarea placeholder="Enter areas for work..." oninput="autoResize(this)"></textarea>
+        </div>
+
+        <div class="section-title">Clinical Competency Assessment</div>
+
+        <div class="rating-key">
+            <strong>COMPETENCY RATING KEY:</strong>
+            1: ABSENT (No experience/unable to perform) | 
+            2: EMERGING (Has knowledge, needs direct instruction) | 
+            3: PRESENT (Needs monitoring barring routine cases) | 
+            4: DEVELOPED (Monitoring only for difficult cases) | 
+            5: CONSISTENT (Well developed, supervisor as consultant)
+        </div>
+
+        <table>
+            <thead>
+                <tr>
+                    <th class="criteria-col">Objective / Criteria</th>
+                    <th class="rating-col">1</th>
+                    <th class="rating-col">2</th>
+                    <th class="rating-col">3</th>
+                    <th class="rating-col">4</th>
+                    <th class="rating-col">5</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>
+                        <strong>Ia - Ethical and Professional Behaviour</strong>
+                        <span class="sub-text">Punctual, culturally sensitive, respects confidentiality, ethical limits.</span>
+                    </td>
+                    <td><input type="radio" name="1a" value="1"></td>
+                    <td><input type="radio" name="1a" value="2"></td>
+                    <td><input type="radio" name="1a" value="3"></td>
+                    <td><input type="radio" name="1a" value="4"></td>
+                    <td><input type="radio" name="1a" value="5"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Ib - Interpersonal Behaviour</strong>
+                        <span class="sub-text">Communication skills, builds trust, responds to cues, manages unexpected events.</span>
+                    </td>
+                    <td><input type="radio" name="1b" value="1"></td>
+                    <td><input type="radio" name="1b" value="2"></td>
+                    <td><input type="radio" name="1b" value="3"></td>
+                    <td><input type="radio" name="1b" value="4"></td>
+                    <td><input type="radio" name="1b" value="5"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Ic - Refining Behaviour</strong>
+                        <span class="sub-text">Reflective practice, receptive to feedback, generates ideas for improvement.</span>
+                    </td>
+                    <td><input type="radio" name="1c" value="1"></td>
+                    <td><input type="radio" name="1c" value="2"></td>
+                    <td><input type="radio" name="1c" value="3"></td>
+                    <td><input type="radio" name="1c" value="4"></td>
+                    <td><input type="radio" name="1c" value="5"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <strong>II - Effective Session Preparation</strong>
+                        <span class="sub-text">Reads records, identifies issues, plans interview/tests appropriately.</span>
+                    </td>
+                    <td><input type="radio" name="2" value="1"></td>
+                    <td><input type="radio" name="2" value="2"></td>
+                    <td><input type="radio" name="2" value="3"></td>
+                    <td><input type="radio" name="2" value="4"></td>
+                    <td><input type="radio" name="2" value="5"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <strong>III - Effective Session Management</strong>
+                        <span class="sub-text">Client interaction, Assessment Selection, Time Management.</span>
+                    </td>
+                    <td><input type="radio" name="3" value="1"></td>
+                    <td><input type="radio" name="3" value="2"></td>
+                    <td><input type="radio" name="3" value="3"></td>
+                    <td><input type="radio" name="3" value="4"></td>
+                    <td><input type="radio" name="3" value="5"></td>
+                </tr>
+
+                 <tr>
+                    <td>
+                        <strong>IV - Effective Session Reasoning & Integration</strong>
+                        <span class="sub-text">Integrates info, recognises inconsistencies, forms impression, appropriate referrals.</span>
+                    </td>
+                    <td><input type="radio" name="4" value="1"></td>
+                    <td><input type="radio" name="4" value="2"></td>
+                    <td><input type="radio" name="4" value="3"></td>
+                    <td><input type="radio" name="4" value="4"></td>
+                    <td><input type="radio" name="4" value="5"></td>
+                </tr>
+
+                <tr>
+                    <td>
+                        <strong>Va - Session Interview</strong>
+                        <span class="sub-text">Hx Taking, Needs assessment, client centered approach.</span>
+                    </td>
+                    <td><input type="radio" name="5a" value="1"></td>
+                    <td><input type="radio" name="5a" value="2"></td>
+                    <td><input type="radio" name="5a" value="3"></td>
+                    <td><input type="radio" name="5a" value="4"></td>
+                    <td><input type="radio" name="5a" value="5"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Vb - Testing</strong>
+                        <span class="sub-text">PTA, Immittance, Speech Mapping. Technically competent & accurate.</span>
+                    </td>
+                    <td><input type="radio" name="5b" value="1"></td>
+                    <td><input type="radio" name="5b" value="2"></td>
+                    <td><input type="radio" name="5b" value="3"></td>
+                    <td><input type="radio" name="5b" value="4"></td>
+                    <td><input type="radio" name="5b" value="5"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Vc - Presentation of Findings</strong>
+                        <span class="sub-text">Presents findings accurately, clear recommendations/orientation.</span>
+                    </td>
+                    <td><input type="radio" name="5c" value="1"></td>
+                    <td><input type="radio" name="5c" value="2"></td>
+                    <td><input type="radio" name="5c" value="3"></td>
+                    <td><input type="radio" name="5c" value="4"></td>
+                    <td><input type="radio" name="5c" value="5"></td>
+                </tr>
+                <tr>
+                    <td>
+                        <strong>Vd - Clinical Writing Skills</strong>
+                        <span class="sub-text">Technical accuracy, logical format, complete file info, timely submission.</span>
+                    </td>
+                    <td><input type="radio" name="5d" value="1"></td>
+                    <td><input type="radio" name="5d" value="2"></td>
+                    <td><input type="radio" name="5d" value="3"></td>
+                    <td><input type="radio" name="5d" value="4"></td>
+                    <td><input type="radio" name="5d" value="5"></td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p style="text-align: center; margin-top: 30px; font-size: 12px; color: #777;">
+            Please discuss this feedback with the student immediately following the session.
+        </p>
+
+    </div>
+
+    <script>
+        // NEW FUNCTION: Automatically resizes textarea height based on content
+        function autoResize(textarea) {
+            textarea.style.height = 'auto'; // Reset height to calculate new scrollHeight
+            textarea.style.height = textarea.scrollHeight + 'px'; // Set height to content height
+        }
+
+        function clearForm() {
+            if(confirm("Are you sure you want to clear all data?")) {
+                const inputs = document.querySelectorAll('input');
+                const textareas = document.querySelectorAll('textarea');
+                
+                inputs.forEach(input => {
+                    if (input.type === 'checkbox' || input.type === 'radio') {
+                        input.checked = false;
+                    } else {
+                        input.value = '';
+                    }
+                });
+
+                textareas.forEach(textarea => {
+                    textarea.value = '';
+                    textarea.style.height = '100px'; // Reset height
+                });
+            }
+        }
+
+        // Create print clones (divs) for all textareas so line breaks are preserved
+       // Replace each <textarea> with a print-only <div> that preserves line breaks.
+        // Return an array so we can restore the original textareas afterwards.
+        function prepareTextareasForPrint() {
+        const mappings = []; // { placeholder, textarea, clone, parent, nextSibling }
+        document.querySelectorAll('textarea').forEach((ta) => {
+            // Compute styles to keep the PDF look consistent with on-screen
+            const cs = window.getComputedStyle(ta);
+            const clone = document.createElement('div');
+
+            // Copy visual styles
+            clone.style.cssText = `
+            width:${cs.width};
+            min-height:${cs.height};
+            padding:${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft};
+            border:${cs.borderTopWidth} ${cs.borderRightWidth} ${cs.borderBottomWidth} ${cs.borderLeftWidth} ${cs.borderTopStyle};
+            border-color:${cs.borderTopColor};
+            border-radius:${cs.borderRadius};
+            font:${cs.fontStyle} ${cs.fontVariant} ${cs.fontWeight} ${cs.fontSize}/${cs.lineHeight} ${cs.fontFamily};
+            color:${cs.color};
+            background:${cs.backgroundColor};
+            box-sizing:${cs.boxSizing};
+            white-space:pre-wrap;            /* preserve \n and wrapping */
+            overflow-wrap:break-word;
+            `;
+            // Inject the textarea's value with its original line breaks
+            clone.textContent = ta.value;
+
+            // Insert a placeholder so we can reinsert the textarea later, in place
+            const placeholder = document.createComment('textarea-placeholder');
+            const parent = ta.parentNode;
+            const nextSibling = ta.nextSibling;
+
+            // Replace textarea in the DOM with the clone (no extra space left behind)
+            parent.replaceChild(clone, ta);
+
+            mappings.push({ placeholder, textarea: ta, clone, parent, nextSibling });
+        });
+        return mappings;
+        }
+
+        // Restore the original textareas back into the DOM
+        function restoreTextareasAfterPrint(mappings) {
+        mappings.forEach(({ textarea, clone, parent, nextSibling }) => {
+            // Put the textarea back where it was
+            if (nextSibling) {
+            parent.insertBefore(textarea, nextSibling);
+            } else {
+            parent.appendChild(textarea);
+            }
+            // Remove the clone
+            clone.remove();
+        });
+        }
+
+        function generatePDF() {
+        // Ensure on-screen textareas have grown to fit their content
+        document.querySelectorAll('textarea').forEach(el => autoResize(el));
+
+        const studentName = (document.getElementById('studentName').value || 'Student_Name').trim();
+        const dateVal = document.getElementById('clinicDate').value;
+        const dateStr = dateVal ? dateVal : new Date().toISOString().split('T')[0];
+        const filename = `${dateStr}_${studentName.replace(/\s+/g, '_')}.pdf`;
+
+        // Swap textareas out for print clones so line breaks are preserved without layout gaps
+        const mappings = prepareTextareasForPrint();
+
+        const element = document.getElementById('feedback-form');
+        const opt = {
+            margin: 0.5,
+            filename,
+            image: { type: 'jpeg', quality: 0.98 },
+            html2canvas: { scale: 2 },
+            jsPDF: { unit: 'in', format: 'a4', orientation: 'portrait' }
+        };
+
+        html2pdf()
+            .set(opt)
+            .from(element)
+            .save()
+            .then(() => restoreTextareasAfterPrint(mappings))
+            .catch((e) => {
+            console.error(e);
+            restoreTextareasAfterPrint(mappings);
+            alert('PDF generation failed. Please try again.');
+            });
+        }
+
+
+    </script>
+</body>
+</html>
