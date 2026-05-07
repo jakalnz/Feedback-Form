@@ -170,15 +170,15 @@
             </div>
             <div class="form-group">
                 <label>Clinician:</label>
-                <input type="text" placeholder="Enter Clinician Name">
+                <input type="text" id="clinician" placeholder="Enter Clinician Name">
             </div>
             <div class="form-group">
                 <label>Clinic Type:</label>
-                <input type="text" placeholder="e.g. Pediatric, HA Fitting">
+                <input type="text" id="clinicType" placeholder="e.g. Pediatric, HA Fitting">
             </div>
             <div class="form-group" style="grid-column: span 2;">
                 <label>MNZAS Member:</label>
-                <input type="checkbox" style="width: auto;"> Yes
+                <input type="checkbox" id="mnzasMember" style="width: auto;"> Yes
             </div>
         </div>
 
@@ -186,17 +186,17 @@
 
         <div class="form-group">
             <label>Overview:</label>
-            <textarea placeholder="List feedback..." oninput="autoResize(this)"></textarea>
+            <textarea id="overview" placeholder="List feedback..." oninput="autoResize(this)"></textarea>
         </div>        
 
         <div class="form-group">
             <label>Well done on the following (1-3 things):</label>
-            <textarea placeholder="Enter feedback..." oninput="autoResize(this)"></textarea>
+            <textarea id="wellDone" placeholder="Enter feedback..." oninput="autoResize(this)"></textarea>
         </div>
 
         <div class="form-group">
             <label>Areas for Improvement:</label>
-            <textarea placeholder="Enter areas for work..." oninput="autoResize(this)"></textarea>
+            <textarea id="areasForImprovement" placeholder="Enter areas for work..." oninput="autoResize(this)"></textarea>
         </div>
 
         <div class="section-title">Clinical Competency Assessment</div>
@@ -352,6 +352,61 @@
             textarea.style.height = textarea.scrollHeight + 'px'; // Set height to content height
         }
 
+        // Form auto-save and restore functionality
+        const FORM_STORAGE_KEY = 'audiology-feedback-form-data';
+
+        function saveFormData() {
+            const formData = {};
+            const inputs = document.querySelectorAll('input, textarea');
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    if (input.checked) {
+                        formData[input.name || input.id] = input.value || true;
+                    }
+                } else {
+                    if (input.value) {
+                        formData[input.name || input.id] = input.value;
+                    }
+                }
+            });
+            localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+        }
+
+        function loadFormData() {
+            const savedData = localStorage.getItem(FORM_STORAGE_KEY);
+            if (savedData) {
+                const formData = JSON.parse(savedData);
+                Object.keys(formData).forEach(key => {
+                    const element = document.querySelector(`[name="${key}"], #${key}`);
+                    if (element) {
+                        if (element.type === 'checkbox') {
+                            element.checked = formData[key] === true;
+                        } else if (element.type === 'radio') {
+                            const radio = document.querySelector(`[name="${key}"][value="${formData[key]}"]`);
+                            if (radio) radio.checked = true;
+                        } else {
+                            element.value = formData[key];
+                            if (element.tagName === 'TEXTAREA') {
+                                autoResize(element);
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function hasFormData() {
+            const inputs = document.querySelectorAll('input, textarea');
+            for (let input of inputs) {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    if (input.checked) return true;
+                } else if (input.value.trim()) {
+                    return true;
+                }
+            }
+            return false;
+        }
+
         function clearForm() {
             if(confirm("Are you sure you want to clear all data?")) {
                 const inputs = document.querySelectorAll('input');
@@ -369,8 +424,27 @@
                     textarea.value = '';
                     textarea.style.height = '100px'; // Reset height
                 });
+
+                // Clear saved data
+                localStorage.removeItem(FORM_STORAGE_KEY);
             }
         }
+
+        // Load saved data on page load
+        document.addEventListener('DOMContentLoaded', loadFormData);
+
+        // Save data on any input change
+        document.addEventListener('input', saveFormData);
+        document.addEventListener('change', saveFormData);
+
+        // Warn before leaving if form has data
+        window.addEventListener('beforeunload', function(e) {
+            if (hasFormData()) {
+                e.preventDefault();
+                e.returnValue = 'You have unsaved changes. Are you sure you want to leave?';
+                return e.returnValue;
+            }
+        });
 
         // Create print clones (divs) for all textareas so line breaks are preserved
        // Replace each <textarea> with a print-only <div> that preserves line breaks.
@@ -452,7 +526,12 @@
             .set(opt)
             .from(element)
             .save()
-            .then(() => restoreTextareasAfterPrint(mappings))
+            .then(() => {
+                restoreTextareasAfterPrint(mappings);
+                // Clear saved data after successful PDF generation
+                localStorage.removeItem(FORM_STORAGE_KEY);
+                alert('PDF saved successfully! Form data has been cleared.');
+            })
             .catch((e) => {
             console.error(e);
             restoreTextareasAfterPrint(mappings);
