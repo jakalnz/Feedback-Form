@@ -353,7 +353,22 @@
         }
 
         // Form auto-save and restore functionality
-        const FORM_STORAGE_KEY = 'audiology-feedback-form-data';
+        const STORAGE_KEY_PREFIX = 'audiology-feedback-form-data-';
+        const LAST_STUDENT_STORAGE_KEY = 'audiology-feedback-form-last-student';
+
+        function sanitizeStorageKey(value) {
+            return value
+                .trim()
+                .replace(/\s+/g, '_')
+                .replace(/[^a-zA-Z0-9_-]/g, '');
+        }
+
+        function getStorageKey() {
+            const studentName = document.getElementById('studentName')?.value.trim();
+            return studentName
+                ? STORAGE_KEY_PREFIX + sanitizeStorageKey(studentName)
+                : STORAGE_KEY_PREFIX + 'unsaved';
+        }
 
         function saveFormData() {
             const formData = {};
@@ -369,11 +384,29 @@
                     }
                 }
             });
-            localStorage.setItem(FORM_STORAGE_KEY, JSON.stringify(formData));
+
+            const storageKey = getStorageKey();
+            localStorage.setItem(storageKey, JSON.stringify(formData));
+
+            if (storageKey !== STORAGE_KEY_PREFIX + 'unsaved') {
+                localStorage.setItem(LAST_STUDENT_STORAGE_KEY, storageKey);
+            } else {
+                localStorage.removeItem(LAST_STUDENT_STORAGE_KEY);
+            }
         }
 
         function loadFormData() {
-            const savedData = localStorage.getItem(FORM_STORAGE_KEY);
+            const studentNameValue = document.getElementById('studentName')?.value.trim();
+            let storageKey = studentNameValue
+                ? STORAGE_KEY_PREFIX + sanitizeStorageKey(studentNameValue)
+                : null;
+
+            if (!storageKey) {
+                storageKey = localStorage.getItem(LAST_STUDENT_STORAGE_KEY)
+                    || STORAGE_KEY_PREFIX + 'unsaved';
+            }
+
+            const savedData = localStorage.getItem(storageKey);
             if (savedData) {
                 const formData = JSON.parse(savedData);
                 Object.keys(formData).forEach(key => {
@@ -393,6 +426,12 @@
                     }
                 });
             }
+            updateDocumentTitle();
+        }
+
+        function updateDocumentTitle() {
+            const studentName = document.getElementById('studentName').value.trim();
+            document.title = studentName ? `${studentName} - Audiology Feedback Form` : 'Audiology Feedback Form';
         }
 
         function hasFormData() {
@@ -425,13 +464,20 @@
                     textarea.style.height = '100px'; // Reset height
                 });
 
-                // Clear saved data
-                localStorage.removeItem(FORM_STORAGE_KEY);
+                const currentKey = getStorageKey();
+                localStorage.removeItem(currentKey);
+                if (localStorage.getItem(LAST_STUDENT_STORAGE_KEY) === currentKey) {
+                    localStorage.removeItem(LAST_STUDENT_STORAGE_KEY);
+                }
+                updateDocumentTitle();
             }
         }
 
         // Load saved data on page load
-        document.addEventListener('DOMContentLoaded', loadFormData);
+        document.addEventListener('DOMContentLoaded', () => {
+            loadFormData();
+            document.getElementById('studentName')?.addEventListener('input', updateDocumentTitle);
+        });
 
         // Save data on any input change
         document.addEventListener('input', saveFormData);
@@ -529,7 +575,11 @@
             .then(() => {
                 restoreTextareasAfterPrint(mappings);
                 // Clear saved data after successful PDF generation
-                localStorage.removeItem(FORM_STORAGE_KEY);
+                const currentKey = getStorageKey();
+                localStorage.removeItem(currentKey);
+                if (localStorage.getItem(LAST_STUDENT_STORAGE_KEY) === currentKey) {
+                    localStorage.removeItem(LAST_STUDENT_STORAGE_KEY);
+                }
                 alert('PDF saved successfully! Form data has been cleared.');
             })
             .catch((e) => {
