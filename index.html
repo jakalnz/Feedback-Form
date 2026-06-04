@@ -17,12 +17,13 @@
         }
         .container {
             width: 100%;
-            max-width: 760px;
+            max-width: 180mm; /* fit A4 printable width with margins */
             background: white;
-            padding: 40px;
+            padding: 20px;
             margin: 0 auto;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
             box-sizing: border-box;
+            overflow: visible;
         }
         
         .header {
@@ -175,13 +176,21 @@
 
         .rating-orange {background-color: #ffcc80;}
         .rating-green {background-color: #a5d6a7;}
+        
+        @media print {
+            body { padding: 0; background: white; }
+            .container { padding: 12px; box-shadow: none; }
+            .controls { display: none !important; }
+            .competency-section { page-break-before: always; break-before: page; }
+            textarea { overflow: visible !important; }
+        }
     </style>
 </head>
 <body>
 
     <div class="controls" data-html2pdf-ignore="true">
         <button class="btn-clear" onclick="clearForm()">Reset / Clear Form</button>
-        <button class="btn-save" onclick="generatePDF()">Save as Locked PDF</button>
+        <button class="btn-save" onclick="generatePDF()">Save PDF</button>
     </div>
 
     <div class="container" id="feedback-form">
@@ -548,9 +557,10 @@
             const cs = window.getComputedStyle(ta);
             const clone = document.createElement('div');
 
-            // Copy visual styles
+            // Copy visual styles but force width to container to avoid overflow in PDF
             clone.style.cssText = `
-            width:${cs.width};
+            width:100%;
+            max-width:100%;
             min-height:${cs.height};
             padding:${cs.paddingTop} ${cs.paddingRight} ${cs.paddingBottom} ${cs.paddingLeft};
             border:${cs.borderTopWidth} ${cs.borderRightWidth} ${cs.borderBottomWidth} ${cs.borderLeftWidth} ${cs.borderTopStyle};
@@ -559,9 +569,11 @@
             font:${cs.fontStyle} ${cs.fontVariant} ${cs.fontWeight} ${cs.fontSize}/${cs.lineHeight} ${cs.fontFamily};
             color:${cs.color};
             background:${cs.backgroundColor};
-            box-sizing:${cs.boxSizing};
+            box-sizing:border-box;
+            display:block;
             white-space:pre-wrap;            /* preserve \n and wrapping */
             overflow-wrap:break-word;
+            word-break:break-word;
             `;
             // Inject the textarea's value with its original line breaks
             clone.textContent = ta.value;
