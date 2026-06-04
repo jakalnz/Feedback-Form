@@ -16,11 +16,13 @@
             padding: 20px;
         }
         .container {
-            max-width: 850px;
+            width: 100%;
+            max-width: 760px;
             background: white;
             padding: 40px;
             margin: 0 auto;
             box-shadow: 0 0 10px rgba(0,0,0,0.1);
+            box-sizing: border-box;
         }
         
         .header {
@@ -72,6 +74,26 @@
             margin-top: 20px;
             margin-bottom: 15px;
             page-break-inside: avoid; /* Keeps title with content */
+        }
+
+        .competency-section {
+            break-before: page;
+            page-break-before: always;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            margin-bottom: 20px;
+            page-break-inside: auto;
+        }
+        thead {
+            display: table-header-group;
+        }
+        tr {
+            page-break-inside: avoid;
+            page-break-after: auto;
         }
         
         /* UPDATED TEXTAREA STYLING */
@@ -209,9 +231,10 @@
             <textarea id="areasForImprovement" placeholder="Enter areas for work..." oninput="autoResize(this)"></textarea>
         </div>
 
-        <div class="section-title">Clinical Competency Assessment</div>
+        <div class="competency-section">
+            <div class="section-title">Clinical Competency Assessment</div>
 
-        <div class="rating-key">
+            <div class="rating-key">
             <strong>COMPETENCY RATING KEY:</strong>
             1: ABSENT (No experience/unable to perform) | 
             2: EMERGING (Has knowledge, needs direct instruction) | 
@@ -360,6 +383,7 @@
                 </tr>
             </tbody>
         </table>
+        </div>
         
         <p style="text-align: center; margin-top: 30px; font-size: 12px; color: #777;">
             Please discuss this feedback with the student immediately following the session.
